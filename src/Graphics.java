@@ -34,6 +34,7 @@ public class Graphics extends Canvas implements Runnable {
 
     // Character "Specs"
     int movementSpeed = 1;
+    boolean playerColliding = false;
 
     // Define Sprites
     private Sprite backdrop;
@@ -43,8 +44,9 @@ public class Graphics extends Canvas implements Runnable {
     // Sprite cords
     private int xBackDrop = 0;
     private int yBackDrop = 0;
-    private int xWall = 100;
-    private int yWall = 100;
+
+    private int[] xWall = {0, 1, 2, 3, 4, 5, 6, 0, 3, 6, 0};
+    private int[] yWall = {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2};
 
     // Player cords
     private int xPlayer = 160;
@@ -75,7 +77,7 @@ public class Graphics extends Canvas implements Runnable {
         //Add Sprites to be drawn
         backdrop = new Sprite(width,height,0xFFFFFF);
         player = new Sprite("img/Main.png");
-        wall = new Sprite(8,8,0x678D58);
+        wall = new Sprite("img/Wall.png");
     }
 
     private void draw() {
@@ -107,9 +109,11 @@ public class Graphics extends Canvas implements Runnable {
 
 
         //Wall Sprite
-        for (int i = 0 ; i < wall.getHeight() ; i++) {
-            for (int j = 0 ; j < wall.getWidth() ; j++) {
-                pixels[(yWall+i)*width + xWall+j] = wall.getPixels()[i*wall.getWidth()+j];
+        for(int k = 0 ; k < xWall.length ; k++) {
+            for (int i = 0; i < wall.getHeight(); i++) {
+                for (int j = 0; j < wall.getWidth(); j++) {
+                    pixels[(yWall[k]*8 + i) * width + xWall[k]*8 + j] = wall.getPixels()[i * wall.getWidth() + j];
+                }
             }
         }
 
@@ -119,12 +123,18 @@ public class Graphics extends Canvas implements Runnable {
         if (yPlayer + vyPlayer < 0 || yPlayer + vyPlayer > height - player.getHeight())
             vyPlayer = 0;
 
-        //Player movement (Using AABB to calculate collisions)
-        if (!(xPlayer + vxPlayer < xWall + 8 && xPlayer + vxPlayer + 8 > xWall && yPlayer + vyPlayer < yWall + 8 && yPlayer + vyPlayer + 8 > yWall)) {
-            xPlayer += vxPlayer;
-            yPlayer += vyPlayer;
-        }
+        //Player movement (Using AABB collision to calculate... well... collisions)
 
+        playerColliding = false;
+        for(int k = 0 ; k < xWall.length ; k++) {
+            if ((xPlayer + vxPlayer < xWall[k]*8 + 8 && xPlayer + vxPlayer + 8 > xWall[k]*8 && yPlayer + vyPlayer < yWall[k]*8 + 8 && yPlayer + vyPlayer + 8 > yWall[k]*8)) {
+                playerColliding = true;
+            }
+        }
+            if (!playerColliding){
+                xPlayer += vxPlayer;
+                yPlayer += vyPlayer;
+            }
 
 
         for (int i = 0 ; i < player.getHeight() ; i++) {
