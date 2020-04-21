@@ -1,6 +1,7 @@
 import javafx.scene.layout.Background;
 
 import javax.swing.*;
+import javax.swing.plaf.synth.SynthRadioButtonMenuItemUI;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -40,17 +41,25 @@ public class Graphics extends Canvas implements Runnable {
     private Sprite backdrop;
     private Sprite player;
     private Sprite wall;
+    private Sprite goal;
+    private Sprite start;
 
     // Sprite cords
     private int xBackDrop = 0;
     private int yBackDrop = 0;
 
+    private int xGoal = 5;
+    private int yGoal = 5;
+
+    private int xStart = 3;
+    private int yStart = 4;
+
     private int[] xWall = {0, 1, 2, 3, 4, 5, 6, 0, 3, 6, 0};
     private int[] yWall = {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2};
 
     // Player cords
-    private int xPlayer = 160;
-    private int yPlayer = 160;
+    private int xPlayer = xStart * 8;
+    private int yPlayer = yStart * 8;
     private int vxPlayer = 0;
     private int vyPlayer = 0;
 
@@ -61,7 +70,7 @@ public class Graphics extends Canvas implements Runnable {
         this.scale = scale;
         image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
-        Dimension size = new Dimension(scale*width, scale*height);
+        Dimension size = new Dimension(scale * width, scale * height);
         setPreferredSize(size);
         frame = new JFrame();
         frame.setTitle(title);
@@ -71,13 +80,16 @@ public class Graphics extends Canvas implements Runnable {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
+
         this.addKeyListener(new MyKeyListener());
         this.requestFocus();
 
         //Add Sprites to be drawn
-        backdrop = new Sprite(width,height,0xFFFFFF);
+        backdrop = new Sprite(width, height, 0xFFFFFF);
         player = new Sprite("img/Main.png");
         wall = new Sprite("img/Wall.png");
+        goal = new Sprite("img/Goal.png");
+        start = new Sprite("img/Start.png");
     }
 
     private void draw() {
@@ -94,26 +106,37 @@ public class Graphics extends Canvas implements Runnable {
     }
 
     private void update() {
-        for (int i = 0 ; i < pixels.length ; i++) {
+        for (int i = 0; i < pixels.length; i++) {
             pixels[i] = 0;
         }
 
         //Background sprite
-        for (int i = 0 ; i < backdrop.getHeight() ; i++) {
-            for (int j = 0 ; j < backdrop.getWidth() ; j++) {
-                pixels[(yBackDrop+i)*width + xBackDrop+j] = backdrop.getPixels()[i*backdrop.getWidth()+j];
+        for (int i = 0; i < backdrop.getHeight(); i++) {
+            for (int j = 0; j < backdrop.getWidth(); j++) {
+                pixels[(yBackDrop + i) * width + xBackDrop + j] = backdrop.getPixels()[i * backdrop.getWidth() + j];
             }
         }
 
-        //Draw Maze
-
-
         //Wall Sprite
-        for(int k = 0 ; k < xWall.length ; k++) {
+        for (int k = 0; k < xWall.length; k++) {
             for (int i = 0; i < wall.getHeight(); i++) {
                 for (int j = 0; j < wall.getWidth(); j++) {
-                    pixels[(yWall[k]*8 + i) * width + xWall[k]*8 + j] = wall.getPixels()[i * wall.getWidth() + j];
+                    pixels[(yWall[k] * 8 + i) * width + xWall[k] * 8 + j] = wall.getPixels()[i * wall.getWidth() + j];
                 }
+            }
+        }
+
+        //Draw Goal
+        for (int i = 0; i < goal.getHeight(); i++) {
+            for (int j = 0; j < goal.getWidth(); j++) {
+                pixels[(yGoal * 8 + i) * width + xGoal * 8 + j] = goal.getPixels()[i * goal.getWidth() + j];
+            }
+        }
+
+        //Draw Start
+        for (int i = 0; i < start.getHeight(); i++) {
+            for (int j = 0; j < start.getWidth(); j++) {
+                pixels[(yStart * 8 + i) * width + xStart * 8 + j] = start.getPixels()[i * start.getWidth() + j];
             }
         }
 
@@ -124,22 +147,27 @@ public class Graphics extends Canvas implements Runnable {
             vyPlayer = 0;
 
         //Player movement (Using AABB collision to calculate... well... collisions)
-
         playerColliding = false;
-        for(int k = 0 ; k < xWall.length ; k++) {
-            if ((xPlayer + vxPlayer < xWall[k]*8 + 8 && xPlayer + vxPlayer + 8 > xWall[k]*8 && yPlayer + vyPlayer < yWall[k]*8 + 8 && yPlayer + vyPlayer + 8 > yWall[k]*8)) {
+        for (int k = 0; k < xWall.length; k++) {
+            if ((xPlayer + vxPlayer < xWall[k] * 8 + 8 && xPlayer + vxPlayer + 8 > xWall[k] * 8 && yPlayer + vyPlayer < yWall[k] * 8 + 8 && yPlayer + vyPlayer + 8 > yWall[k] * 8)) {
                 playerColliding = true;
             }
         }
-            if (!playerColliding){
-                xPlayer += vxPlayer;
-                yPlayer += vyPlayer;
-            }
+        if (!playerColliding) {
+            xPlayer += vxPlayer;
+            yPlayer += vyPlayer;
+        }
 
+        //Check if the player has reached the goal
+        if ((xPlayer < xGoal * 8 + 8 && xPlayer + 8 > xGoal * 8 && yPlayer < yGoal * 8 + 8 && yPlayer + 8 > yGoal * 8)){
+            JOptionPane.showMessageDialog(null, "You win!");
+            System.exit(0); //Closes the game
+        }
 
-        for (int i = 0 ; i < player.getHeight() ; i++) {
-            for (int j = 0 ; j < player.getWidth() ; j++) {
-                pixels[(yPlayer+i)*width + xPlayer+j] = player.getPixels()[i*player.getWidth()+j];
+        //Draw the player sprite
+        for (int i = 0; i < player.getHeight(); i++) {
+            for (int j = 0; j < player.getWidth(); j++) {
+                pixels[(yPlayer + i) * width + xPlayer + j] = player.getPixels()[i * player.getWidth() + j];
             }
         }
     }
@@ -194,25 +222,25 @@ public class Graphics extends Canvas implements Runnable {
 
         @Override
         public void keyPressed(KeyEvent keyEvent) {
-            if (keyEvent.getKeyChar()=='a') {
+            if (keyEvent.getKeyChar() == 'a') {
                 vxPlayer = -movementSpeed;
             }
-            if (keyEvent.getKeyChar()=='d') {
+            if (keyEvent.getKeyChar() == 'd') {
                 vxPlayer = movementSpeed;
             }
-            if (keyEvent.getKeyChar()=='w') {
+            if (keyEvent.getKeyChar() == 'w') {
                 vyPlayer = -movementSpeed;
             }
-            if (keyEvent.getKeyChar()=='s') {
+            if (keyEvent.getKeyChar() == 's') {
                 vyPlayer = movementSpeed;
             }
         }
 
         @Override
         public void keyReleased(KeyEvent keyEvent) {
-            if (keyEvent.getKeyChar()=='a' || keyEvent.getKeyChar()=='d') {
+            if (keyEvent.getKeyChar() == 'a' || keyEvent.getKeyChar() == 'd') {
                 vxPlayer = 0;
-            } else if (keyEvent.getKeyChar()=='w' || keyEvent.getKeyChar()=='s') {
+            } else if (keyEvent.getKeyChar() == 'w' || keyEvent.getKeyChar() == 's') {
                 vyPlayer = 0;
             }
         }
