@@ -47,13 +47,10 @@ public class Graphics extends Canvas implements Runnable {
     // Sprite cords
     private int xBackDrop = 0;
     private int yBackDrop = 0;
-
     private int xGoal = 5;
     private int yGoal = 5;
-
     private int xStart = 3;
     private int yStart = 4;
-
     private int[] xWall = {0, 1, 2, 3, 4, 5, 6, 0, 3, 6, 0};
     private int[] yWall = {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2};
 
