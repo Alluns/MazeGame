@@ -1,7 +1,4 @@
-import javafx.scene.layout.Background;
-
 import javax.swing.*;
-import javax.swing.plaf.synth.SynthRadioButtonMenuItemUI;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -12,7 +9,7 @@ import java.awt.image.DataBufferInt;
 /**
  * This is a class
  * Created 2020-03-25
- * Edited 2020-04-03
+ * Edited 2020-04-23
  *
  * @author Magnus Silverdal
  * @developer Allan Bäckman
@@ -27,34 +24,36 @@ public class Graphics extends Canvas implements Runnable {
     private int[] pixels;
     private int scale;
 
-    // Window "Specs"
+    //Window variables
     private Thread thread;
     private boolean running = false;
     private int fps = 60;
     private int ups = 60;
 
-    // Character "Specs"
+    //Character variables
     int movementSpeed = 1;
     boolean playerColliding = false;
 
-    // Define Sprites
+    //Define Sprites
     private Sprite backdrop;
     private Sprite player;
     private Sprite wall;
     private Sprite goal;
     private Sprite start;
 
-    // Sprite cords
+    //Sprite coordinates
     private int xBackDrop = 0;
     private int yBackDrop = 0;
     private int xGoal = 5;
     private int yGoal = 5;
     private int xStart = 3;
     private int yStart = 4;
-    private int[] xWall = {0, 1, 2, 3, 4, 5, 6, 0, 3, 6, 0};
-    private int[] yWall = {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2};
 
-    // Player cords
+    //Maze coordinates
+    private int[] xWall = {0, 1, 2, 3, 4, 5, 6, 0, 3, 6, 0, 3};
+    private int[] yWall = {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 3};
+
+    //Player coordinates
     private int xPlayer = xStart * 8;
     private int yPlayer = yStart * 8;
     private int vxPlayer = 0;
@@ -76,8 +75,6 @@ public class Graphics extends Canvas implements Runnable {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-
-
         this.addKeyListener(new MyKeyListener());
         this.requestFocus();
 
@@ -137,26 +134,44 @@ public class Graphics extends Canvas implements Runnable {
             }
         }
 
-        //The Character Sprite
+        //Keep player from going outside canvas
         if (xPlayer + vxPlayer < 0 || xPlayer + vxPlayer > width - player.getWidth())
             vxPlayer = 0;
         if (yPlayer + vyPlayer < 0 || yPlayer + vyPlayer > height - player.getHeight())
             vyPlayer = 0;
 
         //Player movement (Using AABB collision to calculate... well... collisions)
+
+        //Check if player is colliding on the X axis
         playerColliding = false;
         for (int k = 0; k < xWall.length; k++) {
-            if ((xPlayer + vxPlayer < xWall[k] * 8 + 8 && xPlayer + vxPlayer + 8 > xWall[k] * 8 && yPlayer + vyPlayer < yWall[k] * 8 + 8 && yPlayer + vyPlayer + 8 > yWall[k] * 8)) {
+            if ((xPlayer + vxPlayer < xWall[k] * 8 + 8 &&
+                    xPlayer + vxPlayer + 8 > xWall[k] * 8 &&
+                    yPlayer < yWall[k] * 8 + 8 &&
+                    yPlayer + 8 > yWall[k] * 8)) {
                 playerColliding = true;
             }
         }
         if (!playerColliding) {
             xPlayer += vxPlayer;
+        }
+
+        //Check if player is colliding on the Y axis
+        playerColliding = false;
+        for (int k = 0; k < xWall.length; k++) {
+            if ((xPlayer < xWall[k] * 8 + 8 &&
+                    xPlayer + 8 > xWall[k] * 8 &&
+                    yPlayer + vyPlayer < yWall[k] * 8 + 8 &&
+                    yPlayer + vyPlayer + 8 > yWall[k] * 8)) {
+                playerColliding = true;
+            }
+        }
+        if (!playerColliding) {
             yPlayer += vyPlayer;
         }
 
         //Check if the player has reached the goal
-        if ((xPlayer < xGoal * 8 + 8 && xPlayer + 8 > xGoal * 8 && yPlayer < yGoal * 8 + 8 && yPlayer + 8 > yGoal * 8)){
+        if ((xPlayer < xGoal * 8 + 8 && xPlayer + 8 > xGoal * 8 && yPlayer < yGoal * 8 + 8 && yPlayer + 8 > yGoal * 8)) {
             JOptionPane.showMessageDialog(null, "You win!");
             System.exit(0); //Closes the game
         }

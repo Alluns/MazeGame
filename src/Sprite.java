@@ -7,7 +7,7 @@ import java.io.IOException;
 /**
  * This is a class
  * Created 2020-03-25
- * Edited 2020-04-03
+ * Edited 2020-04-23
  *
  * @author Magnus Silverdal
  * @developer Allan Bäckman
@@ -21,15 +21,6 @@ public class Sprite {
     private int width;
     private int height;
     private int[] pixels;
-
-    public Sprite(int w, int h) {
-        this.width = w;
-        this.height = h;
-        pixels = new int[w*h];
-        for (int i = 0 ; i < pixels.length ; i++) {
-            pixels[i] = 0xFFFFFF;
-        }
-    }
 
     public Sprite(int w, int h, int col) {
         this.width = w;
