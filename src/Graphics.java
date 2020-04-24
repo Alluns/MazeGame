@@ -5,6 +5,8 @@ import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * This is a class
@@ -40,6 +42,7 @@ public class Graphics extends Canvas implements Runnable {
     private Sprite wall;
     private Sprite goal;
     private Sprite start;
+    private Sprite maze;
 
     //Sprite coordinates
     private int xBackDrop = 0;
@@ -50,8 +53,9 @@ public class Graphics extends Canvas implements Runnable {
     private int yStart = 4;
 
     //Maze coordinates
-    private int[] xWall = {0, 1, 2, 3, 4, 5, 6, 0, 3, 6, 0, 3};
-    private int[] yWall = {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 3};
+    private ArrayList<Integer> xWall = new ArrayList<>();
+    private ArrayList<Integer> yWall = new ArrayList<>();
+    private boolean mazeDrawn = false;
 
     //Player coordinates
     private int xPlayer = xStart * 8;
@@ -84,6 +88,7 @@ public class Graphics extends Canvas implements Runnable {
         wall = new Sprite("img/Wall.png");
         goal = new Sprite("img/Goal.png");
         start = new Sprite("img/Start.png");
+        maze = new Sprite("img/Maze.png");
     }
 
     private void draw() {
@@ -99,9 +104,40 @@ public class Graphics extends Canvas implements Runnable {
         bs.show();
     }
 
+    //Create Maze array
+
     private void update() {
-        for (int i = 0; i < pixels.length; i++) {
-            pixels[i] = 0;
+        Arrays.fill(pixels, 0);
+
+        if (!mazeDrawn){
+            int x = 0;
+            int y = 0;
+            for (int i = 0; i < maze.getHeight(); i++) {
+                for (int j = 0; j < maze.getWidth(); j++) {
+                    if (!(maze.getPixels()[i * maze.getWidth() + j] == 16777215)) {
+                        if (maze.getPixels()[i * maze.getWidth() + j] == 0) {
+                            xWall.add(x);
+                            yWall.add(y);
+                        } else if (maze.getPixels()[i * maze.getWidth() + j] == 65280){
+                            xStart = x;
+                            yStart = y;
+                            xPlayer = xStart * 8;
+                            yPlayer = yStart * 8;
+                        } else if(maze.getPixels()[i * maze.getWidth() + j] == 255){
+                            xGoal = x;
+                            yGoal = y;
+                        }                   }
+                    if (x == maze.getWidth()-1){
+                        x = 0;
+                        y++;
+                    } else {
+                        x++;
+                    }
+
+                    System.out.println("X =" + x + "    ,Y = " + y + "  ,Color = " + maze.getPixels()[i * maze.getWidth() + j]);
+                }
+            }
+            mazeDrawn = true;
         }
 
         //Background sprite
@@ -112,10 +148,10 @@ public class Graphics extends Canvas implements Runnable {
         }
 
         //Wall Sprite
-        for (int k = 0; k < xWall.length; k++) {
+        for (int k = 0; k < xWall.size(); k++) {
             for (int i = 0; i < wall.getHeight(); i++) {
                 for (int j = 0; j < wall.getWidth(); j++) {
-                    pixels[(yWall[k] * 8 + i) * width + xWall[k] * 8 + j] = wall.getPixels()[i * wall.getWidth() + j];
+                    pixels[(yWall.get(k) * 8 + i) * width + xWall.get(k) * 8 + j] = wall.getPixels()[i * wall.getWidth() + j];
                 }
             }
         }
@@ -144,12 +180,13 @@ public class Graphics extends Canvas implements Runnable {
 
         //Check if player is colliding on the X axis
         playerColliding = false;
-        for (int k = 0; k < xWall.length; k++) {
-            if ((xPlayer + vxPlayer < xWall[k] * 8 + 8 &&
-                    xPlayer + vxPlayer + 8 > xWall[k] * 8 &&
-                    yPlayer < yWall[k] * 8 + 8 &&
-                    yPlayer + 8 > yWall[k] * 8)) {
+        for (int k = 0; k < xWall.size(); k++) {
+            if ((xPlayer + vxPlayer < xWall.get(k) * 8 + 8 &&
+                    xPlayer + vxPlayer + 8 > xWall.get(k) * 8 &&
+                    yPlayer < yWall.get(k) * 8 + 8 &&
+                    yPlayer + 8 > yWall.get(k) * 8)) {
                 playerColliding = true;
+                break;
             }
         }
         if (!playerColliding) {
@@ -158,12 +195,13 @@ public class Graphics extends Canvas implements Runnable {
 
         //Check if player is colliding on the Y axis
         playerColliding = false;
-        for (int k = 0; k < xWall.length; k++) {
-            if ((xPlayer < xWall[k] * 8 + 8 &&
-                    xPlayer + 8 > xWall[k] * 8 &&
-                    yPlayer + vyPlayer < yWall[k] * 8 + 8 &&
-                    yPlayer + vyPlayer + 8 > yWall[k] * 8)) {
+        for (int k = 0; k < xWall.size(); k++) {
+            if ((xPlayer < xWall.get(k) * 8 + 8 &&
+                    xPlayer + 8 > xWall.get(k) * 8 &&
+                    yPlayer + vyPlayer < yWall.get(k) * 8 + 8 &&
+                    yPlayer + vyPlayer + 8 > yWall.get(k) * 8)) {
                 playerColliding = true;
+                break;
             }
         }
         if (!playerColliding) {
