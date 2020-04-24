@@ -56,6 +56,7 @@ public class Graphics extends Canvas implements Runnable {
     private ArrayList<Integer> xWall = new ArrayList<>();
     private ArrayList<Integer> yWall = new ArrayList<>();
     private boolean mazeDrawn = false;
+    private int stage = 1;
 
     //Player coordinates
     private int xPlayer = xStart * 8;
@@ -210,8 +211,12 @@ public class Graphics extends Canvas implements Runnable {
 
         //Check if the player has reached the goal
         if ((xPlayer < xGoal * 8 + 8 && xPlayer + 8 > xGoal * 8 && yPlayer < yGoal * 8 + 8 && yPlayer + 8 > yGoal * 8)) {
-            JOptionPane.showMessageDialog(null, "You win!");
-            System.exit(0); //Closes the game
+            stage++;
+            System.out.println("img/" + stage + "Maze.png");
+            maze = new Sprite("img/" + stage + "Maze.png");
+            mazeDrawn = false;
+            xWall.clear();
+            yWall.clear();
         }
 
         //Draw the player sprite

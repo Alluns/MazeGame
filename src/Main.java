@@ -8,7 +8,7 @@
  */
 public class Main {
     public static void main(String[] args) {
-        Graphics graphics = new Graphics(288,192,4);
+        Graphics graphics = new Graphics(36 * 8,24 * 8,4);
         graphics.start();
     }
 }
