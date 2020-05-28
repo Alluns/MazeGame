@@ -11,7 +11,7 @@ import java.util.Arrays;
 /**
  * This is a class
  * Created 2020-03-25
- * Edited 2020-04-23
+ * Edited 2020-04-30
  *
  * @author Magnus Silverdal
  * @developer Allan Bäckman
@@ -30,39 +30,47 @@ public class Graphics extends Canvas implements Runnable {
     private Thread thread;
     private boolean running = false;
     private int fps = 60;
-    private int ups = 60;
+    private int ups = 70;
+    private int SpriteSize = 32;
 
     //Character variables
-    int movementSpeed = 1;
-    boolean playerColliding = false;
+    int movementSpeed = 2;
+    private boolean playerColliding = false;
+    private int playerTimer = 0;
+    private int playerActiveSprite = 1;
+    private boolean playerLookingRight = false;
 
     //Define Sprites
-    private Sprite backdrop;
-    private Sprite player;
-    private Sprite wall;
-    private Sprite goal;
-    private Sprite start;
-    private Sprite maze;
+    private Sprite backdrop = new Sprite(width, height, 0xFFFFFF);
+    private Sprite player = new Sprite("img/Player.png");
+    private Sprite wall = new Sprite("img/Wall Texture.png");
+    private Sprite floor = new Sprite("img/Floor Texture.png");
+    private Sprite goal = new Sprite("img/Exit.png");
+    private Sprite start = new Sprite("img/Exit.png");
+    private Sprite maze = new Sprite("img/1Maze.png");
 
     //Sprite coordinates
     private int xBackDrop = 0;
     private int yBackDrop = 0;
-    private int xGoal = 5;
-    private int yGoal = 5;
-    private int xStart = 3;
-    private int yStart = 4;
+    private int xGoal = 0;
+    private int yGoal = 0;
+    private int xStart = 9;
+    private int yStart = 9;
 
     //Maze coordinates
     private ArrayList<Integer> xWall = new ArrayList<>();
     private ArrayList<Integer> yWall = new ArrayList<>();
+    private ArrayList<Integer> xFloor = new ArrayList<>();
+    private ArrayList<Integer> yFloor = new ArrayList<>();
     private boolean mazeDrawn = false;
     private int stage = 1;
 
     //Player coordinates
-    private int xPlayer = xStart * 8;
-    private int yPlayer = yStart * 8;
+    private int xPlayer = 1;
+    private int yPlayer = 1;
     private int vxPlayer = 0;
     private int vyPlayer = 0;
+
 
     //Draw the frame
     public Graphics(int w, int h, int scale) {
@@ -82,14 +90,6 @@ public class Graphics extends Canvas implements Runnable {
         frame.setVisible(true);
         this.addKeyListener(new MyKeyListener());
         this.requestFocus();
-
-        //Add Sprites to be drawn
-        backdrop = new Sprite(width, height, 0xFFFFFF);
-        player = new Sprite("img/Main.png");
-        wall = new Sprite("img/Wall.png");
-        goal = new Sprite("img/Goal.png");
-        start = new Sprite("img/Start.png");
-        maze = new Sprite("img/Maze.png");
     }
 
     private void draw() {
@@ -105,37 +105,42 @@ public class Graphics extends Canvas implements Runnable {
         bs.show();
     }
 
-    //Create Maze array
-
     private void update() {
         Arrays.fill(pixels, 0);
 
-        if (!mazeDrawn){
+        //Create Maze array
+        if (!mazeDrawn) {
             int x = 0;
             int y = 0;
             for (int i = 0; i < maze.getHeight(); i++) {
                 for (int j = 0; j < maze.getWidth(); j++) {
-                    if (!(maze.getPixels()[i * maze.getWidth() + j] == 16777215)) {
                         if (maze.getPixels()[i * maze.getWidth() + j] == 0) {
                             xWall.add(x);
                             yWall.add(y);
-                        } else if (maze.getPixels()[i * maze.getWidth() + j] == 65280){
+                        } else if (maze.getPixels()[i * maze.getWidth() + j] == 65280) {
                             xStart = x;
                             yStart = y;
-                            xPlayer = xStart * 8;
-                            yPlayer = yStart * 8;
-                        } else if(maze.getPixels()[i * maze.getWidth() + j] == 255){
+                            xFloor.add(x);
+                            yFloor.add(y);
+                            xPlayer = xStart * SpriteSize;
+                            yPlayer = yStart * SpriteSize;
+                        } else if (maze.getPixels()[i * maze.getWidth() + j] == 255) {
                             xGoal = x;
                             yGoal = y;
-                        }                   }
-                    if (x == maze.getWidth()-1){
+                            xFloor.add(x);
+                            yFloor.add(y);
+                        } else {
+                            xFloor.add(x);
+                            yFloor.add(y);
+                        }
+                    if (x == maze.getWidth() - 1) {
                         x = 0;
                         y++;
                     } else {
                         x++;
                     }
 
-                    System.out.println("X =" + x + "    ,Y = " + y + "  ,Color = " + maze.getPixels()[i * maze.getWidth() + j]);
+                    //System.out.println("X =" + x + "    ,Y = " + y + "  ,Color = " + maze.getPixels()[i * maze.getWidth() + j]);
                 }
             }
             mazeDrawn = true;
@@ -148,11 +153,20 @@ public class Graphics extends Canvas implements Runnable {
             }
         }
 
+        //Floor Sprite
+        for (int k = 0; k < xFloor.size(); k++) {
+            for (int i = 0; i < floor.getHeight(); i++) {
+                for (int j = 0; j < floor.getWidth(); j++) {
+                    pixels[(yFloor.get(k) * SpriteSize + i) * width + xFloor.get(k) * SpriteSize + j] = floor.getPixels()[i * floor.getWidth() + j];
+                }
+            }
+        }
+
         //Wall Sprite
         for (int k = 0; k < xWall.size(); k++) {
             for (int i = 0; i < wall.getHeight(); i++) {
                 for (int j = 0; j < wall.getWidth(); j++) {
-                    pixels[(yWall.get(k) * 8 + i) * width + xWall.get(k) * 8 + j] = wall.getPixels()[i * wall.getWidth() + j];
+                        pixels[(yWall.get(k) * SpriteSize + i) * width + xWall.get(k) * SpriteSize + j] = wall.getPixels()[i * wall.getWidth() + j];
                 }
             }
         }
@@ -160,14 +174,18 @@ public class Graphics extends Canvas implements Runnable {
         //Draw Goal
         for (int i = 0; i < goal.getHeight(); i++) {
             for (int j = 0; j < goal.getWidth(); j++) {
-                pixels[(yGoal * 8 + i) * width + xGoal * 8 + j] = goal.getPixels()[i * goal.getWidth() + j];
+                if (!(goal.getPixels()[i * goal.getWidth() + j] / 240 == 0)) {
+                    pixels[(yGoal * SpriteSize + i) * width + xGoal * SpriteSize + j] = goal.getPixels()[i * goal.getWidth() + j];
+                }
             }
         }
 
         //Draw Start
         for (int i = 0; i < start.getHeight(); i++) {
             for (int j = 0; j < start.getWidth(); j++) {
-                pixels[(yStart * 8 + i) * width + xStart * 8 + j] = start.getPixels()[i * start.getWidth() + j];
+                if (!(start.getPixels()[i * start.getWidth() + j] / 240 == 0)) {
+                    pixels[(yStart * SpriteSize + i) * width + xStart * SpriteSize + j] = start.getPixels()[i * start.getWidth() + j];
+                }
             }
         }
 
@@ -177,15 +195,14 @@ public class Graphics extends Canvas implements Runnable {
         if (yPlayer + vyPlayer < 0 || yPlayer + vyPlayer > height - player.getHeight())
             vyPlayer = 0;
 
-        //Player movement (Using AABB collision to calculate... well... collisions)
 
         //Check if player is colliding on the X axis
         playerColliding = false;
         for (int k = 0; k < xWall.size(); k++) {
-            if ((xPlayer + vxPlayer < xWall.get(k) * 8 + 8 &&
-                    xPlayer + vxPlayer + 8 > xWall.get(k) * 8 &&
-                    yPlayer < yWall.get(k) * 8 + 8 &&
-                    yPlayer + 8 > yWall.get(k) * 8)) {
+            if ((xPlayer + vxPlayer < xWall.get(k) * SpriteSize + SpriteSize &&
+                    xPlayer + vxPlayer + SpriteSize > xWall.get(k) * SpriteSize &&
+                    yPlayer < yWall.get(k) * SpriteSize + SpriteSize &&
+                    yPlayer + SpriteSize > yWall.get(k) * SpriteSize)) {
                 playerColliding = true;
                 break;
             }
@@ -197,10 +214,10 @@ public class Graphics extends Canvas implements Runnable {
         //Check if player is colliding on the Y axis
         playerColliding = false;
         for (int k = 0; k < xWall.size(); k++) {
-            if ((xPlayer < xWall.get(k) * 8 + 8 &&
-                    xPlayer + 8 > xWall.get(k) * 8 &&
-                    yPlayer + vyPlayer < yWall.get(k) * 8 + 8 &&
-                    yPlayer + vyPlayer + 8 > yWall.get(k) * 8)) {
+            if ((xPlayer < xWall.get(k) * SpriteSize + SpriteSize &&
+                    xPlayer + SpriteSize > xWall.get(k) * SpriteSize &&
+                    yPlayer + vyPlayer < yWall.get(k) * SpriteSize + SpriteSize &&
+                    yPlayer + vyPlayer + SpriteSize > yWall.get(k) * SpriteSize)) {
                 playerColliding = true;
                 break;
             }
@@ -210,19 +227,53 @@ public class Graphics extends Canvas implements Runnable {
         }
 
         //Check if the player has reached the goal
-        if ((xPlayer < xGoal * 8 + 8 && xPlayer + 8 > xGoal * 8 && yPlayer < yGoal * 8 + 8 && yPlayer + 8 > yGoal * 8)) {
+        if ((xPlayer < xGoal * SpriteSize + SpriteSize && xPlayer + SpriteSize > xGoal * SpriteSize && yPlayer < yGoal * SpriteSize + SpriteSize && yPlayer + SpriteSize > yGoal * SpriteSize)) {
             stage++;
             System.out.println("img/" + stage + "Maze.png");
             maze = new Sprite("img/" + stage + "Maze.png");
-            mazeDrawn = false;
             xWall.clear();
             yWall.clear();
+            xFloor.clear();
+            yFloor.clear();
+            mazeDrawn = false;
         }
+
+        /* Player Sprite */
+
+        //Animate the player Sprite
+        if (vxPlayer < 0) {playerLookingRight = false;}
+        if (vxPlayer > 0) {playerLookingRight = true;}
+
+        if (!(vxPlayer == 0 && vyPlayer == 0)) {
+            if (playerTimer > 16) {
+                switch (playerActiveSprite) {
+                    case 1:
+                        if (playerLookingRight) {
+                            player = new Sprite("img/Player Squish.png");
+                        } else { player = new Sprite("img/Player Squish L.png");}
+                        playerActiveSprite = 2;
+                        break;
+                    case 2:
+                        if (playerLookingRight) {
+                            player = new Sprite("img/Player.png");
+                        } else { player = new Sprite("img/Player L.png");}
+                        playerActiveSprite = 1;
+                        break;
+                }
+                playerTimer = 0;
+
+            } else {
+                playerTimer++;
+            }
+        } else if (!playerLookingRight) { player = new Sprite("img/Player L.png"); playerActiveSprite = 1; }
+        else { player = new Sprite("img/Player.png"); playerActiveSprite = 1; }
 
         //Draw the player sprite
         for (int i = 0; i < player.getHeight(); i++) {
             for (int j = 0; j < player.getWidth(); j++) {
-                pixels[(yPlayer + i) * width + xPlayer + j] = player.getPixels()[i * player.getWidth() + j];
+                if (!(player.getPixels()[i * player.getWidth() + j] == 16777215)) {
+                    pixels[(yPlayer + i) * width + xPlayer + j] = player.getPixels()[i * player.getWidth() + j];
+                }
             }
         }
     }
@@ -272,7 +323,6 @@ public class Graphics extends Canvas implements Runnable {
     private class MyKeyListener implements KeyListener {
         @Override
         public void keyTyped(KeyEvent keyEvent) {
-
         }
 
         @Override
@@ -301,4 +351,3 @@ public class Graphics extends Canvas implements Runnable {
         }
     }
 }
-

@@ -8,7 +8,8 @@
  */
 public class Main {
     public static void main(String[] args) {
-        Graphics graphics = new Graphics(36 * 8,24 * 8,4);
+        Sprite maze = new Sprite("img/1Maze.png");
+        Graphics graphics = new Graphics( maze.getWidth()*32,maze.getHeight()*32,1);
         graphics.start();
     }
 }
