@@ -11,4 +11,5 @@ Step by Step process.
 6. TBD
 
 
-1-3 are vital to the game, 4 would be nice to have and 5+ are all quality of life changes and cool features.
+Link to post mortem:
+https://github.com/Alluns/MazeGame/wiki/Post-mortem 
